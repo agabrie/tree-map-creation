@@ -2,8 +2,9 @@ html, body{
     margin: 0;
     padding: 0;
     font-size: 10px;
-    font-family: 'Courier New', Courier, monospace;
+    font-family:  monospace !important;
 }
+
 .nav-bar{
     height: 7rem;
     background-color: cornflowerblue;
@@ -15,7 +16,7 @@ html, body{
     height: calc(100vh - 12rem);
     box-sizing: border-box;
     /* margin-inline-start: 1px dashed black; */
-    border: 1px dashed black;
+    /* border: 1px dashed black; */
     display: flex;
 }
 
@@ -27,19 +28,27 @@ html, body{
     font-weight: 900;
     box-shadow: 1px 0px 10px 0px rgba(0, 0, 0, 50%);
     padding: 1rem;
+    /* position: relative; */
 }
 .room{
     background-color: coral;
     height: 3rem;
     aspect-ratio: 1;
-    border-radius: 15%;
+    border-radius: 25%;
     box-shadow: 1px 1px 4px 0px rgba(0, 0, 0, 50%);
     z-index: 1;
+}
+.room-start{
+    background-color: palegreen;
+}
+
+.room-end{
+    background-color: palegoldenrod;
 }
 .canvas{
     box-sizing: border-box;
     flex-grow: 1;
-    border: 1px dashed black;
+    /* border: 1px dashed black; */
     position: relative;
 }
 .footer{
@@ -54,9 +63,10 @@ html, body{
 }
 .link-breaker{
     position: absolute;
-    width: 4px;
-    height: 4px;
+    width: 5px;
+    height: 5px;
     background-color: white;
+    border-radius: 50%;
     border: 1px solid black;
     z-index: 1;
 }
@@ -66,5 +76,29 @@ html, body{
     align-items: center;
     position: absolute;
     transform-origin: left center;
-    border: 1px solid black;
+    border: 2px solid black;
+}
+
+.btn{
+    font-family:monospace;
+    font-size: 1.4rem;
+    padding: 1rem;
+    min-width: 9rem;
+    min-height: 4rem;
+    color: cornflowerblue;
+    font-weight: 900;
+    background-color: white;
+    border-radius: 10px;
+    border: none;
+    margin: 0.5rem 0rem;
+}
+
+.call-to-actions{
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    /* position: absolute; */
+    width: 100%;
+    /* left: 0; */
+    /* bottom: 0; */
 }

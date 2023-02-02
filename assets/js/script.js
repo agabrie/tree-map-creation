@@ -6,7 +6,7 @@ let canvas = $("#canvas")
 
 let rooms = []
 let roomNumber = 0;
-
+let roomTypes = ["start", "end", "normal"]
 let selectedRoom = null;
 
 $(document).ready(()=>{
@@ -60,7 +60,7 @@ let createRoom = (roomNumber, x,y)=>{
 
 let addRoomToDOM = (x, y)=>{
     let roomEl = createRoom(roomNumber,x, y )
-    .hover(showRoomOptions, hideRoomOptions)
+    // .hover(showRoomOptions, hideRoomOptions)
     .click(selectRoom)
     .draggable( {
         containment: '#main-content',
@@ -74,10 +74,11 @@ let addRoomToDOM = (x, y)=>{
                 recalculateLine(room, linked.room, linked.link)
             })
         }
-    });
+    })
+    .dblclick(toggleRoomType)
 
     canvas.append(roomEl);
-    let room  = {element:roomEl, location:{x, y}, connectedRooms:[], roomIndex:roomNumber}
+    let room  = {element:roomEl, roomType:0, location:{x, y}, connectedRooms:[], roomIndex:roomNumber}
 
 
     rooms.push(room);
@@ -85,15 +86,34 @@ let addRoomToDOM = (x, y)=>{
 
     return room;
 }
+
+const toggleRoomType=(e)=>{
+    let room = rooms[$(e.target).data("room-number")];
+    room.roomType++;
+    if(room.roomType > 2 )
+    {
+        room.roomType = 0
+    }
+    console.log("room type", room.roomType)
+    if(room.roomType>0){
+        room.element.toggleClass("room-start")
+    }
+    if(room.roomType > 1 || room.roomType <1){
+        room.element.toggleClass("room-end")
+    }
+
+}
 const selectRoom=(event)=>{
     let room =$(event.target)
-    room.css({border:"1px solid red"})
+    room.css({border:"2px solid black"})
     console.log("previous selected", selectedRoom)
     if(selectedRoom != null){
         if(selectedRoom == room.data("room-number")){
             room.css({border:"none"})
             selectedRoom = null; 
         }else{
+            rooms[selectedRoom].element.css({border:"none"})
+            rooms[room.data("room-number")].element.css({border:"none"})
             createLine(rooms[selectedRoom], rooms[room.data("room-number")])
             selectedRoom = null; 
         }
