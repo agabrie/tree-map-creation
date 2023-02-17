@@ -12,11 +12,16 @@
 <body>
     <header class="nav-bar"></header>
     <main class="main-content" id="main-content">
-        <aside class="selectors">
-            <div class="room" id="room-selector"></div>
+        <aside class="selectors" id="config-container">
+            <div class="selectable-rooms" >
+                <div class="room room-regular" id="room-selector"></div>
+                <div class="room room-start" id="room-selector-start"></div>
+                <div class="room room-end" id="room-selector-end"></div>
+            </div>
             <div class="call-to-actions">
                 <button id="btn-log-rooms" class="btn"> Log Rooms</button>
                 <button id="btn-submit-map" class="btn"> Submit</button>
+                <button id="btn-next-iteration" disabled class="btn">Next Iteration</button>
             </div>
         </aside>
         <section class="canvas" id="canvas">

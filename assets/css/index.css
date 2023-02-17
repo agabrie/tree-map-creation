@@ -21,14 +21,18 @@ html, body{
 }
 
 .selectors{
-    height: 100%;
-    width: 20rem;
+    /* height: 100%; */
+    width: 30vw;
+    max-width: 30rem;
     background-color: cornflowerblue;
     color: white;
     font-weight: 900;
     box-shadow: 1px 0px 10px 0px rgba(0, 0, 0, 50%);
     padding: 1rem;
-    /* position: relative; */
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
 }
 .room{
     background-color: coral;
@@ -37,6 +41,9 @@ html, body{
     border-radius: 25%;
     box-shadow: 1px 1px 4px 0px rgba(0, 0, 0, 50%);
     z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 .room-start{
     background-color: palegreen;
@@ -97,8 +104,23 @@ html, body{
     display: flex;
     justify-content: space-evenly;
     align-items: center;
-    /* position: absolute; */
     width: 100%;
+    flex: 1 1 20%;
+
+    /* position: absolute; */
+    flex-wrap:wrap;
     /* left: 0; */
     /* bottom: 0; */
+}
+
+.selectable-rooms{
+    flex: 1 1 80%;
+    gap:1rem;
+    display: flex;
+    justify-content: center;
+}
+
+.btn:disabled{
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 50%);
 }

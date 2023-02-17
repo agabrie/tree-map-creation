@@ -1,25 +1,39 @@
-console.log("Hello World")
 let roomSelector = $("#room-selector")
+let roomSelectorStart = $("#room-selector-start")
+let roomSelectorEnd = $("#room-selector-end")
 let btnLogRooms = $("#btn-log-rooms")
-let btnSubmitMap = $("#btn-submit-map")
+let btnevaluateMap = $("#btn-submit-map")
 let canvas = $("#canvas")
-
+let configContainer = $("#config-container")
+let btnNextIteration = $("#btn-next-iteration")
+let maps = []
 let rooms = []
 let roomNumber = 0;
-let roomTypes = ["start", "end", "normal"]
+let roomTypes = ["room-regular","room-start", "room-end" ]
 let selectedRoom = null;
 
 $(document).ready(()=>{
     roomSelector.draggable( {
         containment: '#main-content',
         helper: "clone",
-        // stack: '#canvas div',
         cursor: 'move',
-        // snap: "#canvas" 
+        revert: "invalid",
         // grid: [ 25, 25 ],
-        // revert: "invalid"
     });
-
+    roomSelectorStart.draggable( {
+        containment: '#main-content',
+        helper: "clone",
+        cursor: 'move',
+        revert: "invalid",
+        // grid: [ 25, 25 ],
+    });
+    roomSelectorEnd.draggable( {
+        containment: '#main-content',
+        helper: "clone",
+        cursor: 'move',
+        revert: "invalid",
+        // grid: [ 25, 25 ],
+    });
     canvas.droppable({
         accept:".room",
         drop: handleCardDrop
@@ -27,40 +41,37 @@ $(document).ready(()=>{
 })
 
 const handleCardDrop = (event, ui)=>{
-    // console.log(ui.draggable.attr('id'))
-    let xPos = ui.position.left-215
-    let yPos = ui.position.top-70
-    // console.log(event,ui)
-    if(ui.draggable.attr('id') == "room-selector"){
-        addRoomToDOM(xPos, yPos);
+    let uiClasses = ui.draggable.attr("class").split(" ");
+    let roomType = uiClasses[1]
+    // console.log(roomType)
+    let xPos = ui.position.left-configContainer.outerWidth()
+    let yPos = ui.position.top
+    if(ui.draggable.attr('id').includes("room-selector")){
+        addRoomToDOM(xPos, yPos, roomType);
     }
     else{
         let roomNum = ui.draggable.data("room-number")
         let room = rooms[roomNum]
         let {left, top} = ui.draggable.position()
-        // room.element.css({
-        //     left:xPos, top:yPos
-        // })
 
         room.location.x = left
         room.location.y = top
 
         room.connectedRooms.forEach((linked)=>{
-            console.log(linked)
             recalculateLine(room, linked.room, linked.link)
         })
     }
+    evaluateMap()
 }
 
-let createRoom = (roomNumber, x,y)=>{
-    let roomEl = $(`<div class="room" id="room-${roomNumber}"></div>`).data("room-number", roomNumber)
+let createRoom = (roomNumber, x,y, roomType=null)=>{
+    let roomEl = $(`<div class="room ${roomType}" id="room-${roomNumber}"></div>`).data("room-number", roomNumber)
     .css({position:"absolute", left:x, top:y})
     return roomEl
 }
 
-let addRoomToDOM = (x, y)=>{
-    let roomEl = createRoom(roomNumber,x, y )
-    // .hover(showRoomOptions, hideRoomOptions)
+let addRoomToDOM = (x, y, roomType=null)=>{
+    let roomEl = createRoom(roomNumber,x, y , roomType)
     .click(selectRoom)
     .draggable( {
         containment: '#main-content',
@@ -78,7 +89,8 @@ let addRoomToDOM = (x, y)=>{
     .dblclick(toggleRoomType)
 
     canvas.append(roomEl);
-    let room  = {element:roomEl, roomType:0, location:{x, y}, connectedRooms:[], roomIndex:roomNumber}
+    let type= roomTypes.indexOf(roomType); 
+    let room  = {element:roomEl, roomType:type, location:{x, y}, connectedRooms:[], roomIndex:roomNumber}
 
 
     rooms.push(room);
@@ -94,7 +106,6 @@ const toggleRoomType=(e)=>{
     {
         room.roomType = 0
     }
-    console.log("room type", room.roomType)
     if(room.roomType>0){
         room.element.toggleClass("room-start")
     }
@@ -106,7 +117,6 @@ const toggleRoomType=(e)=>{
 const selectRoom=(event)=>{
     let room =$(event.target)
     room.css({border:"2px solid black"})
-    console.log("previous selected", selectedRoom)
     if(selectedRoom != null){
         if(selectedRoom == room.data("room-number")){
             room.css({border:"none"})
@@ -119,14 +129,11 @@ const selectRoom=(event)=>{
         }
     }else{
         selectedRoom = room.data("room-number");
-        console.log(selectedRoom)
     }
 }
 const showRoomOptions=(event)=>{
     let room =$(event.target)
     room.css({border:"1px solid black"})
-
-    // console.log(selectedRoom)
 }
 const hideRoomOptions=(event)=>{
     let room =$(event.target)
@@ -140,21 +147,119 @@ const showRooms=()=>{
         console.log(index, room)
     })
 }
+let currentRoom = null
+let traversedRooms = []
+let numberOfAnts = 15;
+let antCounter = 0;
+let ants = []
+const createAnt = (room)=>{
+    console.log("placing ant in room",room)
+    let ant = {
+        antIndex:antCounter,
+        currentRoom:room,
+        traversedRooms:[], 
+    }
+    console.log("ANT ",ant)
+    ant.traversedRooms.push(room)
+    return ant
+}
+const evaluateMap=async ()=>{
+    // let visited = []
+    btnNextIteration.prop("disabled", true);
+    
+    
+    rooms.forEach(room=>{
+        if(room.roomType == 1){
+            room.value = 0
+        }else{
+            room.value = rooms.length-1
+        }
+        room.element.text(`${room.roomIndex}[${room.value}]`)
+    })
+    await evaluateRooms();
+    btnNextIteration.prop("disabled", false);
+    // console.log(ants)
+}
+let populateAnts = ()=>{
+    let startRoom = getStartRoom();
+    console.log(startRoom)
+    while (antCounter < numberOfAnts) {
+        let ant = createAnt(startRoom)
+        ants.push(ant);
+        antCounter++;
+    }
+}
+let sendAnt=(ant)=>{
+    traversedRooms = []
+        let room = ant.currentRoom;
+        console.log(ant)
+        if(room.roomType != 2){
+            traverseRoom(ant.currentRoom)
+            // find next availableRoom
+            // evaluateRooms(ant.currentRoom)
+        }
+}
+let visited = [];
+let evaluateRooms =async ()=>{
+    let room = getEndRoom();
 
-const submitMap=()=>{
-    console.log(rooms)
+    return await evaluateRoom(room);
 }
 
+let evaluateRoom = (currentRoom)=>{
+    let promises = []
+    if(!currentRoom){
+        return ;
+    }
+    currentRoom.element.text(`${currentRoom.roomIndex}[${currentRoom.value}]`)
+    currentRoom.connectedRooms.forEach((connectedRoom,index)=>{
+        // console.log("evaluated",connectedRoom.room.roomIndex, connectedRoom.room.value)
+        if(connectedRoom.room.roomType==0 && (connectedRoom.room.value < currentRoom.value || connectedRoom.room.value == rooms.length-1)){
+            connectedRoom.room.value = currentRoom.value-1;
+            promises.push(
+                new Promise((resolve, reject)=>{
+                    // setTimeout(()=>{
+                        resolve(evaluateRoom(connectedRoom.room))
+                    // },1000)
+                })
+            )
+        }
+        // else{
+        // }
+    })
+    return Promise.all(promises)
+}
+let nextAvailableRoom = (room)=>{
+    if(room.roomType === 2 ){
+        return room
+    }else{
+        for( let i = 0;i<room.connectedRooms.length;i++){
+            return nextAvailableRoom(room.connectedRooms[i].room)
+        }
+    }
+}
+let findNextRoom=(ant)=>{
+    let nextRoom = goToRoom(ant.currentRoom)
+    return nextRoom;
+}
+let getStartRoom=()=>{
+    let room = rooms.find(room=>room.roomType==1);
+    console.log("start room", room)
+    // startRoom.value = 0;
+    return room;
+}
+let getEndRoom = ()=>{
+    let room = rooms.find(room=>room.roomType===2);
+    // startRoom.value = 0;
+    return room;
+}
 const createLine=(room1, room2)=>{
     
     let checkConnected = room1.connectedRooms.find(room=>room.room==room2)
     if(checkConnected){
-
         room1.element.css({border:"none"})
         room2.element.css({border:"none"})
         selectedRoom = null;
-
-        // console.log("already connected")
         return ;
     }
     let line = $(`<div class="link"></div>`)
@@ -168,21 +273,22 @@ const createLine=(room1, room2)=>{
     let linkBreaker = $(`<div class="link-breaker"></div>`).click((e)=>{breakLink(room1, room2, line)})
     line.append(linkBreaker)
     canvas.append(line)
-    // console.log(distance, xMid, yMid, degrees )
+    evaluateMap();
 }
 let breakLink = (room1, room2, link)=>{
     console.log("break link", link, room1, room2);
 
     let index = room1.connectedRooms.findIndex(room=>room.room==room2)
     let index2 = room2.connectedRooms.findIndex(room=>room.room==room1)
-    // console.log(checkConnected)
     room1.connectedRooms.splice(index,1)
     room2.connectedRooms.splice(index2,1)
     link.remove();
-    console.log(room1.connectedRooms, room2.connectedRooms)
-
+    evaluateMap();
 }
 let recalculateLine=(room1, room2, line)=>{
+    // if(room1.roomType == 2 || room2.roomType == 2){
+        // evaluateMap()
+    // }
     let x1 = room1.location.x + 15;
     let y1 = room1.location.y + 15;
 
@@ -190,9 +296,6 @@ let recalculateLine=(room1, room2, line)=>{
     let y2 = room2.location.y+15;
 
     let distance = Math.sqrt(Math.pow(x1-x2, 2)+Math.pow(y1-y2, 2))
-
-    // let xMid = (x1+x2)/2;
-    // let yMid = (y1+y2)/2;
 
     let radians = Math.atan2(y2-y1, x2-x1)
     let degrees = (radians*180)/Math.PI;
@@ -204,6 +307,40 @@ let recalculateLine=(room1, room2, line)=>{
         transform:`rotate(${degrees}deg)`
     })
 }
-// createLine(addRoomToDOM(50, 60), addRoomToDOM(300, 250))
+
+const submitMap = ()=>{
+
+    let mapRooms = []
+    rooms.forEach(room=>{
+        // let r = {element:roomEl, roomType:type, location:{x, y}, connectedRooms:[], roomIndex:roomNumber}
+        let {element, roomType, location, connectedRooms, roomIndex} = room
+
+        let connectedIndexes = connectedRooms.map((room)=>room.room.roomIndex)
+        let r = {roomType, location, connectedIndexes, roomIndex};
+        console.log(r)
+        mapRooms.push(r)
+    })
+    let map = {mapRooms, numberOfAnts}
+    maps.push(map)
+    localStorage.setItem(`map`, JSON.stringify(maps))
+}
 btnLogRooms.on("click",showRooms)
-btnSubmitMap.on("click",submitMap)
+btnevaluateMap.on("click",submitMap)
+btnNextIteration.on("click",()=>{
+    populateAnts();
+    sendAnt(ants[0])
+})
+
+let traverseRoom=(room)=>{
+    if(traversedRooms.includes(room)){
+        console.log("room index",room.roomIndex,"room value", room.value)
+        return room
+    }else{
+        traversedRooms.push(room)
+        room.connectedRooms.forEach(({room})=>{
+            // let n= traverseRoom(room);
+            // console.log("traversal",n)
+            return traverseRoom(room)
+        })
+    }
+}
