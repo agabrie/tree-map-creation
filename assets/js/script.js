@@ -5,6 +5,7 @@ let btnLogRooms = $("#btn-log-rooms")
 let btnevaluateMap = $("#btn-submit-map")
 let canvas = $("#canvas")
 let configContainer = $("#config-container")
+let $storedMaps = $("#stored-maps")
 
 
 let maps = []
@@ -14,8 +15,18 @@ let roomTypes = ["room-regular","room-start", "room-end" ]
 let selectedRoom = null;
 let currentRoom = null
 
-
+// let mousePos = null
 $(document).ready(()=>{
+    // canvas.on("mousemove",(e)=>{
+    //     // console.log(e)
+    //     mousePos = {x:e.offsetX, y:e.offsetY}
+    // })
+    let storedMaps = localStorage.getItem("maps")
+    if(storedMaps){
+        maps = JSON.parse(storedMaps);
+    }
+    btnevaluateMap.prop("disabled", true);
+    displayStoredMaps();
     roomSelector.draggable( {
         containment: '#main-content',
         helper: "clone",
@@ -43,6 +54,32 @@ $(document).ready(()=>{
     })
 })
 
+const generateFromStoredMaps = (storedMap)=>{
+    console.log(storedMap)
+    storedMap.rooms.forEach((storedRoom,index) =>{
+        let currentRoom = rooms[index]
+        if(rooms[index]){
+            currentRoom.location = storedRoom.location
+            currentRoom.roomType = storedRoom.roomType
+            let {x, y} = storedRoom.location;
+            currentRoom.element.css({transform:`translate(${x}px, ${y}px)`})
+            console.log(currentRoom, storedRoom)
+        }
+        // console.log(storedRoom)
+    })
+    // console.log(rooms)
+}
+
+const displayStoredMaps = ()=>{
+    maps.forEach(map=>{
+        let $btnMap = $(`<div class="stored-map-selector" id="#m-${map.name}"><p>${map.name}</p></div>`)
+
+        $btnMap.on("click", ()=>{generateFromStoredMaps(map)})
+        $storedMaps.append($btnMap)
+    })
+
+}
+
 const handleCardDrop = (event, ui)=>{
     let uiClasses = ui.draggable.attr("class").split(" ");
     let roomType = uiClasses[1]
@@ -60,6 +97,9 @@ const handleCardDrop = (event, ui)=>{
         room.location.x = left
         room.location.y = top
 
+        console.log(room)
+        // room.element.css({left:"auto", top:"auto"})
+
         room.connectedRooms.forEach((linked)=>{
             recalculateLine(room, linked.room, linked.link)
         })
@@ -69,7 +109,7 @@ const handleCardDrop = (event, ui)=>{
 
 let createRoom = (roomNumber, x,y, roomType=null)=>{
     let roomEl = $(`<div class="room ${roomType}" id="room-${roomNumber}"></div>`).data("room-number", roomNumber)
-    .css({position:"absolute", left:x, top:y})
+    .css({position:"absolute", transform:`translate(${x}px, ${y}px)`})
     return roomEl
 }
 
@@ -79,15 +119,32 @@ let addRoomToDOM = (x, y, roomType=null)=>{
     .draggable( {
         containment: '#main-content',
         cursor: 'move',
-        drag:()=>{
+        start:(e, ui)=>{
+            // console.log("start", e, ui)
+            // console.log(mousePos)
+            roomEl.css({transform:"none"})
+            // ui.transform =`none`
+        },
+        drag:(e, ui)=>{
             let room = rooms[roomEl.data("room-number")]
+            // console.log(e, ui)
+            // ui.position.top = ui.originalPosition.top - ui.offset.top
+            // ui.position.left = 0
+            // ui.position.top = "auto"
+            // ui.position.left = "auto"
+            // ui.transform =`none`
             let {left, top} = roomEl.position()
             room.location.x = left
             room.location.y = top
             room.connectedRooms.forEach((linked)=>{
                 recalculateLine(room, linked.room, linked.link)
             })
+        },
+        stop:(e, ui)=>{
+            // console.log("stop", mousePos)
+            roomEl.css({left:"auto",top:"auto",transform:`translate(${ui.position.left}px, ${ui.position.top}px)`})
         }
+        
     })
     .dblclick(toggleRoomType)
 
@@ -278,9 +335,19 @@ let recalculateLine=(room1, room2, line)=>{
         transform:`rotate(${degrees}deg)`
     })
 }
-
+const $mapNameInput = $("#map-name-input")
+let mapName;
+$mapNameInput.on("keyup", ()=>{
+    mapName = $mapNameInput.val()
+    console.log(mapName)
+    if(mapName.length>2){
+        btnevaluateMap.prop("disabled", false);
+    }else{
+        btnevaluateMap.prop("disabled", true);
+    }
+})
 const submitMap = ()=>{
-
+    // let mapName = $mapNameInput.val()
     let mapRooms = []
     rooms.forEach(room=>{
         // let r = {element:roomEl, roomType:type, location:{x, y}, connectedRooms:[], roomIndex:roomNumber}
@@ -291,9 +358,9 @@ const submitMap = ()=>{
         console.log(r)
         mapRooms.push(r)
     })
-    let map = {mapRooms}
+    let map = {rooms:mapRooms, name:mapName}
     maps.push(map)
-    localStorage.setItem(`map`, JSON.stringify(maps))
+    localStorage.setItem(`maps`, JSON.stringify(maps))
 }
 btnLogRooms.on("click",showRooms)
 btnevaluateMap.on("click",submitMap)
