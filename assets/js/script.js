@@ -5,12 +5,15 @@ let btnLogRooms = $("#btn-log-rooms")
 let btnevaluateMap = $("#btn-submit-map")
 let canvas = $("#canvas")
 let configContainer = $("#config-container")
-let btnNextIteration = $("#btn-next-iteration")
+
+
 let maps = []
 let rooms = []
 let roomNumber = 0;
 let roomTypes = ["room-regular","room-start", "room-end" ]
 let selectedRoom = null;
+let currentRoom = null
+
 
 $(document).ready(()=>{
     roomSelector.draggable( {
@@ -147,22 +150,8 @@ const showRooms=()=>{
         console.log(index, room)
     })
 }
-let currentRoom = null
-let traversedRooms = []
-let numberOfAnts = 15;
-let antCounter = 0;
-let ants = []
-const createAnt = (room)=>{
-    console.log("placing ant in room",room)
-    let ant = {
-        antIndex:antCounter,
-        currentRoom:room,
-        traversedRooms:[], 
-    }
-    console.log("ANT ",ant)
-    ant.traversedRooms.push(room)
-    return ant
-}
+
+
 const evaluateMap=async ()=>{
     // let visited = []
     btnNextIteration.prop("disabled", true);
@@ -178,35 +167,17 @@ const evaluateMap=async ()=>{
     })
     await evaluateRooms();
     btnNextIteration.prop("disabled", false);
-    // console.log(ants)
 }
-let populateAnts = ()=>{
-    let startRoom = getStartRoom();
-    console.log(startRoom)
-    while (antCounter < numberOfAnts) {
-        let ant = createAnt(startRoom)
-        ants.push(ant);
-        antCounter++;
-    }
-}
-let sendAnt=(ant)=>{
-    traversedRooms = []
-        let room = ant.currentRoom;
-        console.log(ant)
-        if(room.roomType != 2){
-            traverseRoom(ant.currentRoom)
-            // find next availableRoom
-            // evaluateRooms(ant.currentRoom)
-        }
-}
+
+
 let visited = [];
 let evaluateRooms =async ()=>{
     let room = getEndRoom();
 
-    return await evaluateRoom(room);
+    return await evaluateRoomBFS(room);
 }
 
-let evaluateRoom = (currentRoom)=>{
+let evaluateRoomBFS = (currentRoom)=>{
     let promises = []
     if(!currentRoom){
         return ;
@@ -219,16 +190,16 @@ let evaluateRoom = (currentRoom)=>{
             promises.push(
                 new Promise((resolve, reject)=>{
                     // setTimeout(()=>{
-                        resolve(evaluateRoom(connectedRoom.room))
+                        resolve(evaluateRoomBFS(connectedRoom.room))
                     // },1000)
                 })
             )
         }
-        // else{
-        // }
+
     })
     return Promise.all(promises)
 }
+
 let nextAvailableRoom = (room)=>{
     if(room.roomType === 2 ){
         return room
@@ -320,27 +291,9 @@ const submitMap = ()=>{
         console.log(r)
         mapRooms.push(r)
     })
-    let map = {mapRooms, numberOfAnts}
+    let map = {mapRooms}
     maps.push(map)
     localStorage.setItem(`map`, JSON.stringify(maps))
 }
 btnLogRooms.on("click",showRooms)
 btnevaluateMap.on("click",submitMap)
-btnNextIteration.on("click",()=>{
-    populateAnts();
-    sendAnt(ants[0])
-})
-
-let traverseRoom=(room)=>{
-    if(traversedRooms.includes(room)){
-        console.log("room index",room.roomIndex,"room value", room.value)
-        return room
-    }else{
-        traversedRooms.push(room)
-        room.connectedRooms.forEach(({room})=>{
-            // let n= traverseRoom(room);
-            // console.log("traversal",n)
-            return traverseRoom(room)
-        })
-    }
-}
