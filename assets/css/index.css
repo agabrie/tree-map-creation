@@ -85,6 +85,7 @@ html, body{
     position: absolute;
     transform-origin: left center;
     border: 2px solid black;
+
 }
 
 .btn{
@@ -125,3 +126,21 @@ html, body{
     cursor: pointer;
     background-color: rgba(255, 255, 255, 50%);
 }
+
+
+/* @keyframes drawLine {
+    0%{
+        transform: scaleX(0);
+    }
+    100%{
+        transform: scaleX(1);
+    }
+} */
+
+
+
+#GFG { 
+    border: 2px solid black; 
+    box-sizing: border-box;
+    position: absolute;
+} 
