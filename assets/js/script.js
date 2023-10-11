@@ -336,10 +336,10 @@ const createLine=(room1, room2)=>{
         selectedRoom = null;
         return ;
     }
-    let line = $(`<div class="link"></div>`)
-    recalculateLine(room1, room2, line);
+    // let line = $(`<div class="link"></div>`)
+    // recalculateLine(room1, room2, line);
 
-    let link1 = {room:room2,link:line}
+    let link1 = {room:room2/*,link:line*/}
     room1.connectedRooms.push(link1)
     let link2 = {room:room1,link:line}
     room2.connectedRooms.push(link2)
@@ -349,17 +349,17 @@ const createLine=(room1, room2)=>{
     canvas.append(line)
     evaluateMap();
 }
-let breakLink = (room1, room2, link)=>{
-    console.log("break link", link, room1, room2);
+let breakLink = (room1, room2/*, link*/)=>{
+    console.log("break link", /*link, */ room1, room2);
 
     let index = room1.connectedRooms.findIndex(room=>room.room==room2)
     let index2 = room2.connectedRooms.findIndex(room=>room.room==room1)
     room1.connectedRooms.splice(index,1)
     room2.connectedRooms.splice(index2,1)
-    link.remove();
+    // link.remove();
     evaluateMap();
 }
-let recalculateLine=(room1, room2, line)=>{
+let recalculateLine=(room1, room2/*, line*/)=>{
     // if(room1.roomType == 2 || room2.roomType == 2){
         // evaluateMap()
     // }
@@ -378,8 +378,10 @@ let recalculateLine=(room1, room2, line)=>{
         width:distance,
         left:x1,
         top:y1,
+
         transform:`rotate(${degrees}deg)`
     })
+    
 }
 const $mapNameInput = $("#map-name-input")
 let mapName;
