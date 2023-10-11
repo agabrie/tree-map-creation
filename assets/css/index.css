@@ -44,7 +44,7 @@ html, body{
     display: flex;
     justify-content: center;
     align-items: center;
-    /* transition: transform 1s ease-in-out; */
+    transition: background-color 1s ease-in-out;
 }
 .room-start{
     background-color: palegreen;
@@ -124,4 +124,30 @@ html, body{
 .btn:disabled{
     cursor: pointer;
     background-color: rgba(255, 255, 255, 50%);
+}
+
+.stored-maps{
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 1rem;
+}
+
+.stored-map-selector{
+    flex: 1 1 33%;
+    /* border: 1px solid white; */
+    box-sizing: border-box;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 50%);
+    color: cornflowerblue;
+    display: flex;
+    font-size: 1.2rem;
+    justify-content: center;
+    align-items: center;
+    transition: background-color .1s ease-in-out;
+}
+
+.stored-map-selector:hover{
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 100%);
 }

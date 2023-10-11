@@ -54,22 +54,52 @@ $(document).ready(()=>{
     })
 })
 
-const generateFromStoredMaps = (storedMap)=>{
+const generateFromStoredMaps = async (storedMap)=>{
     console.log(storedMap)
+    $mapNameInput.val(storedMap.name)
+    let presolve = Promise.resolve()
+    let promises = []
     storedMap.rooms.forEach((storedRoom,index) =>{
-        let currentRoom = rooms[index]
-        if(rooms[index]){
-            currentRoom.location = storedRoom.location
-            currentRoom.roomType = storedRoom.roomType
-            let {x, y} = storedRoom.location;
-            currentRoom.element.css({transform:`translate(${x}px, ${y}px)`})
-            console.log(currentRoom, storedRoom)
-        }
+        let interval = 0
+        presolve = presolve.then(()=>{
+            let currentRoom = rooms[index]
+            if(currentRoom){
+                currentRoom.location = storedRoom.location
+                currentRoom.roomType = storedRoom.roomType
+                let {x, y} = storedRoom.location;
+                currentRoom.element.css({transition:'transform 1s ease-in-out',transform:`translate(${x}px, ${y}px)`})
+                // console.log(currentRoom, storedRoom)
+                setTimeout(()=>{
+                    currentRoom.element.css({transition:'none'})
+                },1000)
+                interval = 500
+            }else{
+                addRoomToDOM(storedRoom.location.x, storedRoom.location.y, roomTypes[storedRoom.roomType])
+            }
+            currentRoom = rooms[index]
+            // console.log("current",currentRoom, storedRoom)
+            renderRoomType(currentRoom)
+            return new Promise(function (resolve) {
+                setTimeout(resolve, interval);
+              });
+        })
+        promises.push(presolve)
         // console.log(storedRoom)
     })
+
+    await Promise.all(promises)
+
+    evaluateMap();
+    generateLinksFromStoredMaps(storedMap)
     // console.log(rooms)
 }
-
+const generateLinksFromStoredMaps=(storedMap)=>{
+    storedMap.rooms.forEach((storedRoom, ri)=>{
+        storedRoom.connectedIndexes.forEach((ci, index)=>{
+            createLine(rooms[ri], rooms[ci])
+        })
+    })
+}
 const displayStoredMaps = ()=>{
     maps.forEach(map=>{
         let $btnMap = $(`<div class="stored-map-selector" id="#m-${map.name}"><p>${map.name}</p></div>`)
@@ -108,6 +138,7 @@ const handleCardDrop = (event, ui)=>{
 }
 
 let createRoom = (roomNumber, x,y, roomType=null)=>{
+    // console.log("create room",roomType)
     let roomEl = $(`<div class="room ${roomType}" id="room-${roomNumber}"></div>`).data("room-number", roomNumber)
     .css({position:"absolute", transform:`translate(${x}px, ${y}px)`})
     return roomEl
@@ -150,6 +181,7 @@ let addRoomToDOM = (x, y, roomType=null)=>{
 
     canvas.append(roomEl);
     let type= roomTypes.indexOf(roomType); 
+    // console.log(type)
     let room  = {element:roomEl, roomType:type, location:{x, y}, connectedRooms:[], roomIndex:roomNumber}
 
 
@@ -166,13 +198,27 @@ const toggleRoomType=(e)=>{
     {
         room.roomType = 0
     }
-    if(room.roomType>0){
-        room.element.toggleClass("room-start")
-    }
-    if(room.roomType > 1 || room.roomType <1){
-        room.element.toggleClass("room-end")
-    }
+    // console.log(room.roomType)
+    renderRoomType(room)
 
+}
+const renderRoomType = (room)=>{
+    // console.log(room.roomType)
+    if(room.roomType==1){
+        // console.log("start",room.roomType)
+        room.element.addClass("room-start")
+        room.element.removeClass("room-end")
+    }
+    else if(room.roomType==2){
+        // console.log("end",room.roomType)
+        room.element.addClass("room-end")
+        room.element.removeClass("room-start")
+    }
+    else {
+        // console.log("default",room.roomType)
+        room.element.removeClass("room-start")
+        room.element.removeClass("room-end")
+    }
 }
 const selectRoom=(event)=>{
     let room =$(event.target)
@@ -282,7 +328,7 @@ let getEndRoom = ()=>{
     return room;
 }
 const createLine=(room1, room2)=>{
-    
+    console.log(room1, room2)
     let checkConnected = room1.connectedRooms.find(room=>room.room==room2)
     if(checkConnected){
         room1.element.css({border:"none"})
@@ -296,8 +342,8 @@ const createLine=(room1, room2)=>{
     let link1 = {room:room2,link:line}
     room1.connectedRooms.push(link1)
     let link2 = {room:room1,link:line}
-
     room2.connectedRooms.push(link2)
+
     let linkBreaker = $(`<div class="link-breaker"></div>`).click((e)=>{breakLink(room1, room2, line)})
     line.append(linkBreaker)
     canvas.append(line)
